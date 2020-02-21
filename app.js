@@ -3,11 +3,43 @@ const app = express()
 const router = require('./routes')
 const errorHandler = require('./middlewares/errorHandler')
 const cors = require('cors')
-const server = require("http").Server(app);
-const io = require("socket.io")(server);
-const { Room } = require('./models')
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+let connectedUser = 0
+let players = 0
+let playerNames = []
+let steps = []
 
-const port = 3000
+io.on('connection', function(socket){
+    connectedUser ++
+    if(connectedUser==0) {
+        players = 0
+    }
+    console.log(connectedUser + ' user connected');
+
+    socket.on('join', function (playerName) {
+        players++
+        playerNames.push(playerName)
+        io.emit('playerJoin', players)
+        // console.log(playerNames);
+    })
+
+    socket.on('startGame', function () {
+        io.emit('gameStarting', playerNames)
+    })
+
+    socket.on('disconnect', function(){
+        connectedUser --
+        if (players > 0){
+            players--
+            io.emit('playerJoin', players)
+        } else {
+            players = 0
+            io.emit('playerJoin', players)
+        }
+        console.log(connectedUser + ' user connected');
+      });
+  });
 
 app
     .use(cors())
@@ -20,24 +52,8 @@ app
     .use('/', router)
     .use(errorHandler)
 
-Room
-    .findAll()
-    .then(result => {
-        result.forEach(el => {
-            const nsp = io.of(`/${el.id}`);
-            nsp.on('connection', function (socket) {
-                socket.join(el.id)
-                nsp.emit('join', `connected to Room ${el.id}!`);
-            });
-        });
-    })
-    .catch(err => {
-        console.log(err)
+    http.listen(3000, () => {
+        console.log('on port 3000')
     })
 
-
-server.listen(port, () => {
-    console.log(`Listening to Port ${port}`)
-})
-
-// module.exports = server
+// module.exports = app
