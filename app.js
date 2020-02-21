@@ -8,11 +8,11 @@ const io = require('socket.io')(http);
 let connectedUser = 0
 let players = 0
 let playerNames = []
-let steps = []
+let suits = []
 
-io.on('connection', function(socket){
-    connectedUser ++
-    if(connectedUser==0) {
+io.on('connection', function (socket) {
+    connectedUser++
+    if (connectedUser == 0) {
         players = 0
     }
     console.log(connectedUser + ' user connected');
@@ -28,18 +28,30 @@ io.on('connection', function(socket){
         io.emit('gameStarting', playerNames)
     })
 
-    socket.on('disconnect', function(){
-        connectedUser --
-        if (players > 0){
+    socket.on('disconnect', function () {
+        connectedUser--
+        if (players > 0) {
             players--
             io.emit('playerJoin', players)
         } else {
             players = 0
             io.emit('playerJoin', players)
         }
+        players = 0;
+        playerNames = [];
         console.log(connectedUser + ' user connected');
-      });
-  });
+    });
+    socket.on('sendSuit', (suit) => {
+        suits.push(suit);
+    });
+    socket.on("showResult", () => {
+        io.emit("result", suits);
+        setTimeout(() => {
+            suits = [];
+        }, 5000);
+    });
+});
+
 
 app
     .use(cors())
@@ -52,8 +64,8 @@ app
     .use('/', router)
     .use(errorHandler)
 
-    http.listen(3000, () => {
-        console.log('on port 3000')
-    })
+http.listen(3000, () => {
+    console.log('on port 3000')
+})
 
 // module.exports = app
