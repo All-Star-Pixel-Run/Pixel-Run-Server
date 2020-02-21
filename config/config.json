@@ -1,7 +1,7 @@
 {
   "development": {
-    "username": "thedunnaf",
-    "password": "edvokgrate2",
+    "username": "postgres",
+    "password": "postgres",
     "database": "pixel-run",
     "host": "127.0.0.1",
     "dialect": "postgres"
